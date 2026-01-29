@@ -1,16 +1,21 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"net/http"
-	"time"
 )
 
-func greet(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hello World! %s", time.Now())
-}
-
 func main() {
-	http.HandleFunc("/", greet)
-	http.ListenAndServe(":8080", nil)
+	mux := http.NewServeMux()
+
+	// API v1 routes
+	mux.HandleFunc("GET /api/v1/animals", handleListAnimals)
+	mux.HandleFunc("GET /api/v1/animals/{animal}/breeds", handleListBreeds)
+	mux.HandleFunc("GET /api/v1/animals/{animal}/breeds/{breed}/photo", handleGetPhoto)
+
+	// Health check
+	mux.HandleFunc("GET /health", handleHealth)
+
+	log.Println("Starting server on :8080")
+	log.Fatal(http.ListenAndServe(":8080", mux))
 }
