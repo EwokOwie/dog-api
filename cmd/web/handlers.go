@@ -25,10 +25,6 @@ func (app *application) handleListBreeds(w http.ResponseWriter, r *http.Request)
 
 	breeds, err := animal.GetBreeds()
 	if err != nil {
-		if errors.Is(err, models.ErrUpstreamAPI) {
-			app.serverError(w, r, err)
-			return
-		}
 		app.serverError(w, r, err)
 		return
 	}
