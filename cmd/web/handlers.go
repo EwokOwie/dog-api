@@ -1,7 +1,10 @@
 package main
 
 import (
+	"errors"
 	"net/http"
+
+	"github.com/EwokOwie/dog-api/internal/models"
 )
 
 func (app *application) handleListAnimals(w http.ResponseWriter, r *http.Request) {
@@ -22,6 +25,10 @@ func (app *application) handleListBreeds(w http.ResponseWriter, r *http.Request)
 
 	breeds, err := animal.GetBreeds()
 	if err != nil {
+		if errors.Is(err, models.ErrUpstreamAPI) {
+			app.serverError(w, r, err)
+			return
+		}
 		app.serverError(w, r, err)
 		return
 	}
@@ -42,6 +49,10 @@ func (app *application) handleGetPhoto(w http.ResponseWriter, r *http.Request) {
 
 	photoURL, err := animal.GetBreedPhoto(breed)
 	if err != nil {
+		if errors.Is(err, models.ErrBreedNotFound) {
+			app.notFound(w, "breed not found")
+			return
+		}
 		app.serverError(w, r, err)
 		return
 	}

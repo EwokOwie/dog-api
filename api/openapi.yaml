@@ -1,0 +1,181 @@
+openapi: 3.0.3
+info:
+  title: Animal Photos API
+  description: A backend service to retrieve animal breed photos. Currently supports dogs via the Dog CEO API, extensible for other animals.
+  version: 1.0.0
+  contact:
+    name: API Support
+
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+
+paths:
+  /api/v1/animals:
+    get:
+      summary: List available animals
+      description: Returns a list of all animal types supported by the API
+      operationId: listAnimals
+      tags:
+        - Animals
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnimalsResponse'
+              example:
+                data:
+                  - dog
+
+  /api/v1/animals/{animal}/breeds:
+    get:
+      summary: List breeds for an animal
+      description: Returns all available breeds for the specified animal type
+      operationId: listBreeds
+      tags:
+        - Breeds
+      parameters:
+        - name: animal
+          in: path
+          required: true
+          description: The animal type (e.g., dog)
+          schema:
+            type: string
+          example: dog
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BreedsResponse'
+              example:
+                data:
+                  - akita
+                  - beagle
+                  - bulldog
+                  - husky
+                  - labrador
+        '404':
+          description: Animal not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "animal not found"
+
+  /api/v1/animals/{animal}/breeds/{breed}/photo:
+    get:
+      summary: Get a photo for a breed
+      description: Returns a random photo URL for the specified breed
+      operationId: getBreedPhoto
+      tags:
+        - Photos
+      parameters:
+        - name: animal
+          in: path
+          required: true
+          description: The animal type (e.g., dog)
+          schema:
+            type: string
+          example: dog
+        - name: breed
+          in: path
+          required: true
+          description: The breed name
+          schema:
+            type: string
+          example: husky
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PhotoResponse'
+              example:
+                data:
+                  url: "https://images.dog.ceo/breeds/husky/n02110185_10047.jpg"
+        '404':
+          description: Animal or breed not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "animal not found"
+        '500':
+          description: Failed to fetch photo from upstream API
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /health:
+    get:
+      summary: Health check
+      description: Returns the health status of the service
+      operationId: healthCheck
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                data:
+                  status: ok
+
+components:
+  schemas:
+    AnimalsResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: string
+          description: List of available animal types
+
+    BreedsResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: string
+          description: List of available breeds
+
+    PhotoResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            url:
+              type: string
+              format: uri
+              description: URL of the breed photo
+
+    HealthResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            status:
+              type: string
+              description: Health status
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message

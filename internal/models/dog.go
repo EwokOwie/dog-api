@@ -39,12 +39,12 @@ func (d *Dog) Name() string {
 func (d *Dog) GetBreeds() ([]string, error) {
 	resp, err := d.client.Get(dogAPIBaseURL + "/breeds/list/all")
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch breeds: %w", err)
+		return nil, fmt.Errorf("%w: %v", ErrUpstreamAPI, err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("dog API returned status %d", resp.StatusCode)
+		return nil, fmt.Errorf("%w: status %d", ErrUpstreamAPI, resp.StatusCode)
 	}
 
 	var apiResp dogAPIResponse
@@ -76,12 +76,16 @@ func (d *Dog) GetBreedPhoto(breed string) (string, error) {
 	url := fmt.Sprintf("%s/breed/%s/images/random", dogAPIBaseURL, breed)
 	resp, err := d.client.Get(url)
 	if err != nil {
-		return "", fmt.Errorf("failed to fetch photo: %w", err)
+		return "", fmt.Errorf("%w: %v", ErrUpstreamAPI, err)
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode == http.StatusNotFound {
+		return "", ErrBreedNotFound
+	}
+
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("dog API returned status %d", resp.StatusCode)
+		return "", fmt.Errorf("%w: status %d", ErrUpstreamAPI, resp.StatusCode)
 	}
 
 	var apiResp dogAPIResponse
