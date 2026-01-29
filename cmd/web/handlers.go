@@ -1,38 +1,55 @@
 package main
 
 import (
-	"fmt"
-	"log"
 	"net/http"
 )
 
-func handleListAnimals(w http.ResponseWriter, r *http.Request) {
-	log.Println("handleListAnimals called")
-	fmt.Fprintln(w, "hello from handleListAnimals")
+func (app *application) handleListAnimals(w http.ResponseWriter, r *http.Request) {
+	app.logger.Info("listing animals")
+	animals := app.animals.ListAnimals()
+	app.writeJSON(w, http.StatusOK, animals)
 }
 
-func handleListBreeds(w http.ResponseWriter, r *http.Request) {
-	animal := r.PathValue("animal")
-	log.Printf("handleListBreeds called for animal: %s", animal)
-	fmt.Fprintf(w, "hello from handleListBreeds - animal: %s\n", animal)
+func (app *application) handleListBreeds(w http.ResponseWriter, r *http.Request) {
+	animalName := r.PathValue("animal")
+	app.logger.Info("listing breeds", "animal", animalName)
+
+	animal, ok := app.animals.Get(animalName)
+	if !ok {
+		app.notFound(w, "animal not found")
+		return
+	}
+
+	breeds, err := animal.GetBreeds()
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	app.writeJSON(w, http.StatusOK, breeds)
 }
 
-func handleGetPhoto(w http.ResponseWriter, r *http.Request) {
-	animal := r.PathValue("animal")
+func (app *application) handleGetPhoto(w http.ResponseWriter, r *http.Request) {
+	animalName := r.PathValue("animal")
 	breed := r.PathValue("breed")
-	log.Printf("handleGetPhoto called for animal: %s, breed: %s", animal, breed)
-	fmt.Fprintf(w, "hello from handleGetPhoto - animal: %s, breed: %s\n", animal, breed)
+	app.logger.Info("getting photo", "animal", animalName, "breed", breed)
+
+	animal, ok := app.animals.Get(animalName)
+	if !ok {
+		app.notFound(w, "animal not found")
+		return
+	}
+
+	photoURL, err := animal.GetBreedPhoto(breed)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	app.writeJSON(w, http.StatusOK, map[string]string{"url": photoURL})
 }
 
-func handleGetSubBreedPhoto(w http.ResponseWriter, r *http.Request) {
-	animal := r.PathValue("animal")
-	breed := r.PathValue("breed")
-	subbreed := r.PathValue("subbreed")
-	log.Printf("handleGetSubBreedPhoto called for animal: %s, breed: %s, subbreed: %s", animal, breed, subbreed)
-	fmt.Fprintf(w, "hello from handleGetSubBreedPhoto - animal: %s, breed: %s, subbreed: %s\n", animal, breed, subbreed)
-}
-
-func handleHealth(w http.ResponseWriter, r *http.Request) {
-	log.Println("handleHealth called")
-	fmt.Fprintln(w, "hello from handleHealth")
+func (app *application) handleHealth(w http.ResponseWriter, r *http.Request) {
+	app.logger.Info("health check")
+	app.writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }

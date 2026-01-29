@@ -1,21 +1,35 @@
 package main
 
 import (
-	"log"
+	"flag"
+	"log/slog"
 	"net/http"
+	"os"
+
+	"github.com/EwokOwie/dog-api/internal/models"
 )
 
+type application struct {
+	logger  *slog.Logger
+	animals *models.AnimalService
+}
+
 func main() {
-	mux := http.NewServeMux()
+	addr := flag.String("addr", ":8080", "HTTP network address")
+	flag.Parse()
 
-	// API v1 routes
-	mux.HandleFunc("GET /api/v1/animals", handleListAnimals)
-	mux.HandleFunc("GET /api/v1/animals/{animal}/breeds", handleListBreeds)
-	mux.HandleFunc("GET /api/v1/animals/{animal}/breeds/{breed}/photo", handleGetPhoto)
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 
-	// Health check
-	mux.HandleFunc("GET /health", handleHealth)
+	animals := models.NewAnimalService()
 
-	log.Println("Starting server on :8080")
-	log.Fatal(http.ListenAndServe(":8080", mux))
+	app := &application{
+		logger:  logger,
+		animals: animals,
+	}
+
+	logger.Info("starting server", "addr", *addr)
+
+	err := http.ListenAndServe(*addr, app.routes())
+	logger.Error(err.Error())
+	os.Exit(1)
 }
