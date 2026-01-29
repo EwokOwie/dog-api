@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/justinas/alice"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 func (app *application) routes() http.Handler {
@@ -16,6 +17,16 @@ func (app *application) routes() http.Handler {
 
 	// Health check
 	mux.HandleFunc("GET /health", app.handleHealth)
+
+	// Serve OpenAPI spec
+	mux.HandleFunc("GET /api/openapi.yaml", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "api/openapi.yaml")
+	})
+
+	// Swagger UI
+	mux.Handle("/docs/", httpSwagger.Handler(
+		httpSwagger.URL("/api/openapi.yaml"),
+	))
 
 	standard := alice.New(app.recoverPanic, app.logRequest, commonHeaders)
 
