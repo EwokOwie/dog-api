@@ -49,17 +49,17 @@ func (d *Dog) GetBreeds() ([]string, error) {
 
 	var apiResp dogAPIResponse
 	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", err)
+		return nil, fmt.Errorf("%w: failed to decode response: %v", ErrUpstreamAPI, err)
 	}
 
 	if apiResp.Status != "success" {
-		return nil, fmt.Errorf("dog API returned status: %s", apiResp.Status)
+		return nil, fmt.Errorf("%w: API returned status: %s", ErrUpstreamAPI, apiResp.Status)
 	}
 
 	// The message is a map of breed -> sub-breeds
 	var breedsMap map[string][]string
 	if err := json.Unmarshal(apiResp.Message, &breedsMap); err != nil {
-		return nil, fmt.Errorf("failed to parse breeds: %w", err)
+		return nil, fmt.Errorf("%w: failed to parse breeds: %v", ErrUpstreamAPI, err)
 	}
 
 	breeds := make([]string, 0, len(breedsMap))
@@ -90,16 +90,16 @@ func (d *Dog) GetBreedPhoto(breed string) (string, error) {
 
 	var apiResp dogAPIResponse
 	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
-		return "", fmt.Errorf("failed to decode response: %w", err)
+		return "", fmt.Errorf("%w: failed to decode response: %v", ErrUpstreamAPI, err)
 	}
 
 	if apiResp.Status != "success" {
-		return "", fmt.Errorf("dog API returned status: %s", apiResp.Status)
+		return "", fmt.Errorf("%w: API returned status: %s", ErrUpstreamAPI, apiResp.Status)
 	}
 
 	var photoURL string
 	if err := json.Unmarshal(apiResp.Message, &photoURL); err != nil {
-		return "", fmt.Errorf("failed to parse photo URL: %w", err)
+		return "", fmt.Errorf("%w: failed to parse photo URL: %v", ErrUpstreamAPI, err)
 	}
 
 	return photoURL, nil
