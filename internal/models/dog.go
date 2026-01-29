@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-const dogAPIBaseURL = "https://dog.ceo/api"
+const defaultDogAPIBaseURL = "https://dog.ceo/api"
 
 // dogAPIResponse represents the standard response format from dog.ceo API
 type dogAPIResponse struct {
@@ -18,7 +18,8 @@ type dogAPIResponse struct {
 
 // Dog implements the Animal interface for dog breeds
 type Dog struct {
-	client *http.Client
+	client  *http.Client
+	baseURL string
 }
 
 // NewDog creates a new Dog instance with a configured HTTP client
@@ -27,6 +28,7 @@ func NewDog() *Dog {
 		client: &http.Client{
 			Timeout: 10 * time.Second,
 		},
+		baseURL: defaultDogAPIBaseURL,
 	}
 }
 
@@ -37,7 +39,7 @@ func (d *Dog) Name() string {
 
 // GetBreeds fetches all available dog breeds from the Dog API
 func (d *Dog) GetBreeds() ([]string, error) {
-	resp, err := d.client.Get(dogAPIBaseURL + "/breeds/list/all")
+	resp, err := d.client.Get(d.baseURL + "/breeds/list/all")
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", ErrUpstreamAPI, err)
 	}
@@ -73,7 +75,7 @@ func (d *Dog) GetBreeds() ([]string, error) {
 
 // GetBreedPhoto fetches a random photo URL for the specified breed
 func (d *Dog) GetBreedPhoto(breed string) (string, error) {
-	url := fmt.Sprintf("%s/breed/%s/images/random", dogAPIBaseURL, breed)
+	url := fmt.Sprintf("%s/breed/%s/images/random", d.baseURL, breed)
 	resp, err := d.client.Get(url)
 	if err != nil {
 		return "", fmt.Errorf("%w: %v", ErrUpstreamAPI, err)
